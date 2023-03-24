@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "ts-svelte",
+  "version": "1.0",
+  "description": "desc. of ts-svelte",
+  "icons": {
+    "16": "images/icon-16.png"
+  },
+  "action": {
+    "default_popup": "src/popup/index.html"
+  },  
+  "permissions": ["storage"]
+}
