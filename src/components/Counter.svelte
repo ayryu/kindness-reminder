@@ -1,73 +1,31 @@
 <script lang="ts">
-  let urlVisits: Date;
+  let startOfToday = new Date().setHours(0,0,0,0);
 
-  let searching: Promise<chrome.history.HistoryItem[]> = chrome.history.search({
-      text: "",
-      startTime: 0,
-      maxResults: 1
-    });
+  let historyItemsPromise: Promise<chrome.history.HistoryItem[]> = chrome.history.search({
+    text: "", startTime: startOfToday
+  });
 
-  searching.then(listVisits);
-
-  function listVisits(historyItems: chrome.history.HistoryItem[]) {
-    if (historyItems.length) {
-      const gettingVisits = chrome.history.getVisits({
-        url: historyItems[0].url
-      });
-      gettingVisits.then(gotVisits);
-    }
-  }
-
-  function gotVisits(visits: chrome.history.VisitItem[]) {
-    for (const visit of visits) {
-      urlVisits = new Date(visit.visitTime);
-    }
-  }
-
-  // let count: number = 0;
-  // export let count: number;
-  // let message: string = null;
-
-  // const increment = () => { count += 1; };
-  // const decrement = () => { count -= 1; };
-
-  // const handleSave = () => {
-  //   chrome.storage.sync.set({count}).then(() => {
-  //     message = 'Updated!';
-
-  //     setTimeout(() => {
-  //       message = null;
-  //     }, 2000);
-  //   });
-  // };
 </script>
 
 <div>
   <p>
-    <!-- Current count: <span>{count}</span> -->
-    Latest recorded visit: <span>{urlVisits}</span>
+    Start of Today: <span>{new Date(startOfToday)}</span>
   </p>
-  <div>
-    <!-- <button on:click={decrement}>-</button>
-    <button on:click={increment}>+</button> -->
-    <!-- <button on:click={handleSave}>Save</button>
-    {#if message}<span>{message}</span>{/if} -->
-  </div>
+  {#await historyItemsPromise}
+    <p>...waiting</p>
+  {:then historyItems} 
+    {#each historyItems as item}
+    <p>
+      URL visited: <a href="{item.url}" rel="noopener" target="_blank">{item.url}</a>
+    </p>
+    <p>
+      last visit time: <span>{new Date(item.lastVisitTime)}</span>
+    </p>
+    {/each}
+  {:catch error}
+    <p style="color: red">{error.message}</p>
+  {/await}
 </div>
 
 <style scoped>
-  button {
-    color: blue;
-    /* padding: theme('spacing.2') theme('spacing.4');
-    font-size: theme('fontSize.base'); */
-    border: 1px solid;
-    /* box-shadow: theme('boxShadow.lg');
-    background-color: theme('backgroundColor.blue.50'); */
-  }
-
-  button:hover,
-  button:focus {
-    background-color: theme('colors.blue.800');
-    color: theme('colors.blue.50');
-  }
 </style>
