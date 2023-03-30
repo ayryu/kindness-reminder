@@ -1,41 +1,57 @@
-<!-- <script lang="ts">
-  let count: number = 0
-  const increment = () => {
-    count += 1
-  }
-</script>
-
-<button on:click={increment}>
-  count is {count}
-</button> -->
-
 <script lang="ts">
-  export let count: number;
-  let message: string = null;
+  let urlVisits: Date;
 
-  const increment = () => (count += 1);
-  const decrement = () => (count -= 1);
-
-  const handleSave = () => {
-    chrome.storage.sync.set({count}).then(() => {
-      message = 'Updated!';
-
-      setTimeout(() => {
-        message = null;
-      }, 2000);
+  let searching: Promise<chrome.history.HistoryItem[]> = chrome.history.search({
+      text: "",
+      startTime: 0,
+      maxResults: 1
     });
-  };
+
+  searching.then(listVisits);
+
+  function listVisits(historyItems: chrome.history.HistoryItem[]) {
+    if (historyItems.length) {
+      const gettingVisits = chrome.history.getVisits({
+        url: historyItems[0].url
+      });
+      gettingVisits.then(gotVisits);
+    }
+  }
+
+  function gotVisits(visits: chrome.history.VisitItem[]) {
+    for (const visit of visits) {
+      urlVisits = new Date(visit.visitTime);
+    }
+  }
+
+  // let count: number = 0;
+  // export let count: number;
+  // let message: string = null;
+
+  // const increment = () => { count += 1; };
+  // const decrement = () => { count -= 1; };
+
+  // const handleSave = () => {
+  //   chrome.storage.sync.set({count}).then(() => {
+  //     message = 'Updated!';
+
+  //     setTimeout(() => {
+  //       message = null;
+  //     }, 2000);
+  //   });
+  // };
 </script>
 
 <div>
   <p>
-    Current count: <span>{count}</span>
+    <!-- Current count: <span>{count}</span> -->
+    Latest recorded visit: <span>{urlVisits}</span>
   </p>
   <div>
-    <button on:click={decrement}>-</button>
-    <button on:click={increment}>+</button>
-    <button on:click={handleSave}>Save</button>
-    {#if message}<span>{message}</span>{/if}
+    <!-- <button on:click={decrement}>-</button>
+    <button on:click={increment}>+</button> -->
+    <!-- <button on:click={handleSave}>Save</button>
+    {#if message}<span>{message}</span>{/if} -->
   </div>
 </div>
 
