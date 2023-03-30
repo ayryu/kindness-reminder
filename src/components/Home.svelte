@@ -16,7 +16,7 @@
   {:then historyItems} 
     {#each historyItems as item}
     <p>
-      URL visited: <a href="{item.url}" rel="noopener" target="_blank">{item.url}</a>
+      Page visited: <a href="{item.url}" rel="noopener" target="_blank">{item.title}</a>
     </p>
     <p>
       last visit time: <span>{new Date(item.lastVisitTime)}</span>
