@@ -5,22 +5,52 @@
     text: "", startTime: startOfToday
   });
 
+  let organizedHistoryPromise: Promise<{}> = 
+    historyItemsPromise
+      .then((elements) => {
+        let organizedHistory = {};
+        for (let item of elements) {
+          let hostname = new URL(item.url).hostname;
+          // once hostname key is established
+          // it's values should be an array of HistoryItems
+          if(!Array.isArray(organizedHistory[hostname])) {
+            organizedHistory[hostname] = [item];
+          } else if(Array.isArray(organizedHistory[hostname])) {
+            organizedHistory[hostname].push(item);
+          }
+        }
+        return organizedHistory;
+      }
+  );
+
+  let obj = 
+  {
+    "google":  ["google.com", "google.com/1"],
+    "youtube": ["youtube.com"],
+  };
+
 </script>
 
 <div>
   <p>
     Start of Today: <span>{new Date(startOfToday)}</span>
   </p>
-  {#await historyItemsPromise}
+
+  {#await organizedHistoryPromise}
     <p>...waiting</p>
-  {:then historyItems} 
-    {#each historyItems as item}
+  {:then organizedHistoryObject}
+    {#each Object.entries(organizedHistoryObject) as [hostname, HistoryItems]}
     <p>
-      Page visited: <a href="{item.url}" rel="noopener" target="_blank">{item.title}</a>
+      Host: <span>{hostname}</span>
     </p>
-    <p>
-      last visit time: <span>{new Date(item.lastVisitTime)}</span>
-    </p>
+    <ul>
+      <!-- HistoryItems keys are index values -->
+      {#each Object.values(HistoryItems) as historyItem}
+        <li><a href="{historyItem.url}" rel="noopener" target="_blank">
+          Item: {historyItem.title}
+        </a></li>
+      {/each}
+    </ul>
     {/each}
   {:catch error}
     <p style="color: red">{error.message}</p>
