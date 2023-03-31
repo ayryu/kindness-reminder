@@ -7,9 +7,9 @@
     let organizedHistory = {};
     for (let item of historyItems) {
       let hostname = new URL(item.url).hostname;
-        !Array.isArray(organizedHistory[hostname]) ?
-          organizedHistory[hostname] = [item] :
-          organizedHistory[hostname].push(item);
+        Array.isArray(organizedHistory[hostname]) ?
+          organizedHistory[hostname].push(item) :  
+          organizedHistory[hostname] = [item];
     }
 
     return organizedHistory;
