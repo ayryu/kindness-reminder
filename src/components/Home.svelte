@@ -1,27 +1,19 @@
 <script lang="ts">
   let startOfToday = new Date().setHours(0,0,0,0);
 
-  let historyItemsPromise: Promise<chrome.history.HistoryItem[]> = chrome.history.search({
-    text: "", startTime: startOfToday
-  });
+  async function organizeHistoryPromise(): Promise<{}> {
+    const historyItems = await chrome.history.search({text: "", startTime: startOfToday});
+    
+    let organizedHistory = {};
+    for (let item of historyItems) {
+      let hostname = new URL(item.url).hostname;
+        !Array.isArray(organizedHistory[hostname]) ?
+          organizedHistory[hostname] = [item] :
+          organizedHistory[hostname].push(item);
+    }
 
-  let organizedHistoryPromise: Promise<{}> = 
-    historyItemsPromise
-      .then((elements) => {
-        let organizedHistory = {};
-        for (let item of elements) {
-          let hostname = new URL(item.url).hostname;
-          // once hostname key is established
-          // it's values should be an array of HistoryItems
-          if(!Array.isArray(organizedHistory[hostname])) {
-            organizedHistory[hostname] = [item];
-          } else if(Array.isArray(organizedHistory[hostname])) {
-            organizedHistory[hostname].push(item);
-          }
-        }
-        return organizedHistory;
-      }
-  );
+    return organizedHistory;
+  }
 
   let obj = 
   {
@@ -36,7 +28,7 @@
     Start of Today: <span>{new Date(startOfToday)}</span>
   </p>
 
-  {#await organizedHistoryPromise}
+  {#await organizeHistoryPromise()}
     <p>...waiting</p>
   {:then organizedHistoryObject}
     {#each Object.entries(organizedHistoryObject) as [hostname, HistoryItems]}
@@ -46,9 +38,11 @@
     <ul>
       <!-- HistoryItems keys are index values -->
       {#each Object.values(HistoryItems) as historyItem}
+        {#if historyItem.title.trim().length !== 0}
         <li><a href="{historyItem.url}" rel="noopener" target="_blank">
           Item: {historyItem.title}
         </a></li>
+        {/if}
       {/each}
     </ul>
     {/each}
