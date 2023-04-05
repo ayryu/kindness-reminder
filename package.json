@@ -15,7 +15,6 @@
     "@tsconfig/svelte": "^3.0.0",
     "@types/chrome": "^0.0.224",
     "carbon-components-svelte": "^0.73.5",
-    "carbon-preprocess-svelte": "^0.9.1",
     "chrome-types": "^0.1.179",
     "svelte": "^3.55.1",
     "svelte-check": "^2.10.3",
