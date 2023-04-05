@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Button, breakpoints } from "carbon-components-svelte";
+
   let startOfToday = new Date().setHours(0,0,0,0);
 
   async function organizeHistoryPromise(): Promise<{}> {
@@ -22,6 +24,9 @@
   };
 
 </script>
+
+<Button>Primary button</Button>
+  {breakpoints.md}
 
 <div>
   <p>
