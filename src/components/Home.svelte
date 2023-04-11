@@ -3,6 +3,18 @@
 
   let startOfToday = new Date().setHours(0,0,0,0);
 
+  let flavours = ['Mint choc chip'];
+
+	let menu = [
+		{ id: 1, name: 'Cookies and cream'},
+		{id: 2, name: 'Mint choc chip'},
+    {id: 3, name: 'Cookies and cream'},
+		{id: 4, name: 'Mint choc chip'},
+    {id: 5, name: 'Cookies and cream'},
+		{id: 6, name: 'Mint choc chip'},
+		{id: 7, name: 'Raspberry ripple'}
+	];
+
   async function organizeHistoryPromise(): Promise<{}> {
     const historyItems = await chrome.history.search({text: "", startTime: startOfToday});
     
@@ -53,5 +65,20 @@
   {/await}
 </div>
 
+<div id="checklist">
+  {#if menu.length !== 0}
+    {#each menu as flavour (flavour.id)}
+      <label>
+        <input type=checkbox bind:group={flavours} name="flavours" value={flavour.id}>
+        {flavour.name}
+      </label>
+    {/each}
+  {/if}
+</div>
+
 <style scoped>
+  #checklist {
+    display: flex;
+    flex-direction: column;
+  }
 </style>
