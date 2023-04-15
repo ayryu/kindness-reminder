@@ -2,29 +2,34 @@
   import { Accordion, AccordionItem } from "carbon-components-svelte";
 
   let startOfToday = new Date().setHours(0,0,0,0);
-
-	let checklist = [
-		{ id: (+new Date * Math.random()).toString(36).substring(0,6), task: 'Have food to eat'},
-		{id: (+new Date * Math.random()).toString(36).substring(0,6), task: 'stand up'},
-    {id: (+new Date * Math.random()).toString(36).substring(0,6), task: 'Check your body'},
-	];
-
-  let selectedTasks = [checklist[0]];
+  let storageList = [];
 
   let textInput = '';
 
-  function addToChecklist() {
-    if(textInput.length !== 0) {
-      let id = (+new Date * Math.random()).toString(36).substring(0,6);
-      checklist = [...checklist, {id: id, task: textInput}];
-      textInput = '';
-    }
+  async function setToStorage() {
+    let objectId = (+new Date * Math.random()).toString(36).substring(0,6);
+    let object = 
+      {
+        [objectId] : 
+          {
+            task: textInput,
+            dateCreated: new Date()
+          }
+      };
+    await chrome.storage.local.set(object);
+    storageList = [...storageList, object];
   }
 
-  function removeFromChecklist(index) {
-		checklist.splice(index, 1);
-		checklist = checklist;
-    }
+  async function clearStorage() {
+    await chrome.storage.local.clear();
+  }
+
+  async function getFromStoragePromise() {
+    let response = await chrome.storage.local.get();
+    console.log("unaltered response", response);
+    console.log("Object.entries", Object.entries(response));
+    return response;
+  }
 
   async function organizeHistoryPromise(): Promise<{}> {
     const historyItems = await chrome.history.search({text: "", startTime: startOfToday});
@@ -49,24 +54,34 @@
 </script>
 
 <div>
-  <p>
+  <!-- <p>
     Start of Today: <span>{new Date(startOfToday)}</span>
-  </p>
+  </p> -->
 
 <input bind:value={textInput}>
-<button on:click={addToChecklist}>Add</button>
+<button on:click={setToStorage}>Add</button>
+<button on:click={clearStorage}>Clear All</button>
 
+
+<!-- {#if storageList.length !== 0} -->
 <div id="checklist">
-  {#if checklist.length !== 0}
-    {#each checklist as element, index (element.id)}
+  {#await getFromStoragePromise()}
+  <p>...waiting</p>
+  {:then resultsObject}
+    {#each Object.entries(resultsObject) as element, index (element)}
       <label>
-        <input type=checkbox bind:group={selectedTasks} name="selectedTasks" value={element.id}>
-        {element.task}
+        <input type=checkbox name="selectedTasks" value={element[1].task}>
+        {element[1].task}
       </label>
-      <span on:click={() => removeFromChecklist(index)}>❌</span>
+      <!-- currently element[0] is the id of the object -->
+      <!-- <span on:click={() => removeFromStorage(element[0])}>❌</span> -->
     {/each}
-  {/if}
+  {:catch error}
+        <p style="color: red">{error.message}</p>
+  {/await}
 </div>
+<!-- {/if} -->
+
 
   {#await organizeHistoryPromise()}
     <p>...waiting</p>
