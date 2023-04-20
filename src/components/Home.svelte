@@ -61,8 +61,6 @@
   async function displayStoredEntries() {
     let response = await chrome.storage.local.get("tasklist");
     displayedList = TASKLIST in response ? response.tasklist : displayedList;
-
-    return response;
   }
 
   async function organizeHistoryPromise(): Promise<{}> {
@@ -100,7 +98,7 @@
 <div id="checklist">
   {#await displayStoredEntries()}
   <p>Add a task</p>
-  {:then returnValue}
+  {:then}
     {#each displayedList as entry}
       <label>
         <input type=checkbox name="selectedTasks" value={entry.userInput}>
