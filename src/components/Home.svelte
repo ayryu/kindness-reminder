@@ -2,32 +2,66 @@
   import { Accordion, AccordionItem } from "carbon-components-svelte";
 
   let startOfToday = new Date().setHours(0,0,0,0);
-  let storageList = [];
+  let displayedList = [];
+
+  const TASKLIST = "tasklist";
 
   let textInput = '';
 
-  async function setToStorage() {
+  async function createNewEntry() {
     let objectId = (+new Date * Math.random()).toString(36).substring(0,6);
-    let object = 
-      {
-        [objectId] : 
-          {
-            task: textInput,
-            dateCreated: new Date()
-          }
-      };
-    await chrome.storage.local.set(object);
-    storageList = [...storageList, object];
+    return {
+      id: objectId,
+      userInput: textInput,
+      dateCreated: new Date()
+    };
   }
+
+  async function updateList(newEntry: object) {
+    try {
+      let response = await chrome.storage.local.get(TASKLIST);
+      return TASKLIST in response ? [...response.tasklist, newEntry] : [newEntry];
+    } catch (error) {
+      console.log("Error updating list in updateList", error);
+    }
+  }
+
+  async function setEntry() {
+    let newEntry = await createNewEntry();
+    let updatedList = await updateList(newEntry);
+
+    try {
+      await chrome.storage.local.set({"tasklist": updatedList});
+      displayedList = displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
+      textInput = '';
+    } catch (error) {
+      console.log("Error setting new entry in setEntry", error);
+    }
+  }
+
+  let returnValueFromSet = {
+    tasklist: [
+      {
+        id: "pewofke",
+        userInput: textInput,
+        dateCreated: new Date()
+      },
+      {
+        id: "khjl3t4w",
+        userInput: textInput,
+        dateCreated: new Date()
+      },
+    ]
+  };
 
   async function clearStorage() {
     await chrome.storage.local.clear();
   }
 
-  async function getFromStoragePromise() {
-    let response = await chrome.storage.local.get();
-    console.log("unaltered response", response);
-    console.log("Object.entries", Object.entries(response));
+  async function displayStoredEntries() {
+    let response = await chrome.storage.local.get("tasklist");
+    displayedList = TASKLIST in response ? response.tasklist : displayedList;
+
     return response;
   }
 
@@ -42,6 +76,7 @@
           organizedHistory[hostname] = [item];
     }
 
+    // console.log("Organized History", organizedHistory);
     return organizedHistory;
   }
 
@@ -59,29 +94,22 @@
   </p> -->
 
 <input bind:value={textInput}>
-<button on:click={setToStorage}>Add</button>
+<button on:click={setEntry}>Add</button>
 <button on:click={clearStorage}>Clear All</button>
 
-
-<!-- {#if storageList.length !== 0} -->
 <div id="checklist">
-  {#await getFromStoragePromise()}
-  <p>...waiting</p>
-  {:then resultsObject}
-    {#each Object.entries(resultsObject) as element, index (element)}
+  {#await displayStoredEntries()}
+  <p>Add a task</p>
+  {:then returnValue}
+    {#each displayedList as entry}
       <label>
-        <input type=checkbox name="selectedTasks" value={element[1].task}>
-        {element[1].task}
+        <input type=checkbox name="selectedTasks" value={entry.userInput}>
+        {entry.userInput}
       </label>
-      <!-- currently element[0] is the id of the object -->
       <!-- <span on:click={() => removeFromStorage(element[0])}>❌</span> -->
     {/each}
-  {:catch error}
-        <p style="color: red">{error.message}</p>
   {/await}
 </div>
-<!-- {/if} -->
-
 
   {#await organizeHistoryPromise()}
     <p>...waiting</p>
