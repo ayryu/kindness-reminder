@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Accordion, AccordionItem } from "carbon-components-svelte";
+  import type { Entry } from "src/types/entry.type";
 
   let startOfToday = new Date().setHours(0,0,0,0);
   let displayedList = [];
@@ -8,7 +9,19 @@
 
   let textInput = '';
 
+  // create new Entry object
+  // if Entry object is missing info, the following functions should fail
+  // pull existing list from storage
+  // create new array with existing list and add new Entry object
+  // set updated array to storage
+
   async function createNewEntry() {
+    if(textInput.trim().length === 0) {
+      console.log("textInput from createNewEntry", textInput);
+      console.log("current displayedList: ", displayedList);
+      textInput = '';
+      return;
+    }
     let objectId = (+new Date * Math.random()).toString(36).substring(0,6);
     return {
       id: objectId,
@@ -17,25 +30,51 @@
     };
   }
 
-  async function updateList(newEntry: object) {
+  async function createListWithAddedEntry(newEntry: Entry) {
     try {
       let response = await chrome.storage.local.get(TASKLIST);
       return TASKLIST in response ? [...response.tasklist, newEntry] : [newEntry];
     } catch (error) {
-      console.log("Error updating list in updateList", error);
+      console.log("Error updating list in createListWithAddedEntry", error);
     }
   }
 
   async function setEntry() {
+    console.log("displayedList in setEntry before doing anything: ", displayedList);
     let newEntry = await createNewEntry();
-    let updatedList = await updateList(newEntry);
+    console.log("createNewEntry called in setEntry: ", newEntry);
+    if(newEntry === undefined || (Object.entries(newEntry).length === 0)) {
+      console.log("displayedList in setEntry when newEntry is undefined: ", displayedList);
+      return;
+    }
+    let updatedList = await createListWithAddedEntry(newEntry);
 
     try {
       await chrome.storage.local.set({"tasklist": updatedList});
       displayedList = displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
+      console.log("displayedList after set in storage: ", displayedList);
       textInput = '';
     } catch (error) {
       console.log("Error setting new entry in setEntry", error);
+    }
+  }
+
+  async function removeEntry(index: number) {
+    try {
+      let response = await chrome.storage.local.get(TASKLIST);
+      if(TASKLIST in response === false || !Array.isArray(response.tasklist)) {
+        console.log("response.tasklist does not exist or is not an array");
+        return;
+      }
+      console.log("unupdated tasklist from removeEntry: ", response.tasklist);
+      let updatedList = [...response.tasklist];
+      updatedList.splice(index, 1);
+
+      await chrome.storage.local.set({"tasklist": updatedList});
+      displayedList = [...updatedList];
+      console.log("updated tasklist once entry is removed: ", displayedList);
+    } catch (error) {
+      console.log("Error removing entry in removeEntry", error);
     }
   }
 
@@ -61,6 +100,7 @@
   async function displayStoredEntries() {
     let response = await chrome.storage.local.get("tasklist");
     displayedList = TASKLIST in response ? response.tasklist : displayedList;
+    console.log("displayedList in displayStoredEntries", displayedList);
   }
 
   async function organizeHistoryPromise(): Promise<{}> {
@@ -95,19 +135,21 @@
 <button on:click={setEntry}>Add</button>
 <button on:click={clearStorage}>Clear All</button>
 
+{#if displayedList.length > 0}
 <div id="checklist">
   {#await displayStoredEntries()}
   <p>Add a task</p>
   {:then}
-    {#each displayedList as entry}
+    {#each displayedList as entry, index (entry.id)}
       <label>
         <input type=checkbox name="selectedTasks" value={entry.userInput}>
         {entry.userInput}
       </label>
-      <!-- <span on:click={() => removeFromStorage(element[0])}>❌</span> -->
+      <span on:click={() => removeEntry(index)}>❌</span>
     {/each}
   {/await}
 </div>
+{/if}
 
   {#await organizeHistoryPromise()}
     <p>...waiting</p>
