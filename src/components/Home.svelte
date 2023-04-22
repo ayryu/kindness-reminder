@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Accordion, AccordionItem } from "carbon-components-svelte";
   import type { Entry } from "src/types/entry.type";
+  import { onMount } from 'svelte';
 
   let startOfToday = new Date().setHours(0,0,0,0);
   let displayedList = [];
@@ -124,6 +125,11 @@
     "youtube": ["youtube.com"],
   };
 
+  onMount(async () => {
+		const response = await chrome.storage.local.get("tasklist");
+		displayedList = TASKLIST in response ? response.tasklist : displayedList;
+	});
+
 </script>
 
 <div>
@@ -141,11 +147,13 @@
   <p>Add a task</p>
   {:then}
     {#each displayedList as entry, index (entry.id)}
-      <label>
-        <input type=checkbox name="selectedTasks" value={entry.userInput}>
-        {entry.userInput}
-      </label>
-      <span on:click={() => removeEntry(index)}>❌</span>
+      <div class="entry">
+        <label>
+          <input type=checkbox name="selectedTasks" value={entry.userInput}>
+          {entry.userInput}
+        </label>
+        <span on:click={() => removeEntry(index)}>❌</span>
+      </div>
     {/each}
   {/await}
 </div>
@@ -178,5 +186,9 @@
   #checklist {
     display: flex;
     flex-direction: column;
+  }
+  .entry {
+    display: flex;
+    /* flex-direction: row; */
   }
 </style>
