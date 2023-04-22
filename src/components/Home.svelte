@@ -10,6 +10,9 @@
 
   let textInput = '';
 
+  let displayEntries = displayStoredEntries();
+  let historyResults = organizeHistoryPromise();
+
   // create new Entry object
   // if Entry object is missing info, the following functions should fail
   // pull existing list from storage
@@ -143,7 +146,7 @@
 
 {#if displayedList.length > 0}
 <div id="checklist">
-  {#await displayStoredEntries()}
+  {#await displayEntries}
   <p>Add a task</p>
   {:then}
     {#each displayedList as entry, index (entry.id)}
@@ -159,7 +162,7 @@
 </div>
 {/if}
 
-  {#await organizeHistoryPromise()}
+  {#await historyResults}
     <p>...waiting</p>
   {:then organizedHistoryObject}
   <Accordion size="xl" align="start">
