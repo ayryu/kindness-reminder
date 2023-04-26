@@ -11,6 +11,14 @@
     tasklist: []
   };
 
+  $ : {
+    let old = {
+      tasklist: []
+    };
+
+    old.tasklist.splice(index, 1, newValue);
+  }
+
   let textInput = '';
 
   let displayEntries = displayStoredEntries();
@@ -33,7 +41,8 @@
     return {
       id: objectId,
       userInput: textInput,
-      dateCreated: new Date()
+      dateCreated: new Date(),
+      checked: false,
     };
   }
 
@@ -175,8 +184,8 @@
       {#each displayedList as entry, index (entry.id)}
         <div class="entry">
           <label>
-            <input type=checkbox name="selectedTasks" value={entry.userInput}>
-            {entry.userInput}
+            <input bind:checked={entry.checked} type=checkbox name="selectedTasks" value={entry.userInput}>
+            <span class:checked={entry.checked}>{entry.userInput}</span>
           </label>
           <span on:click={() => removeEntry(index)}>❌</span>
         </div>
@@ -217,5 +226,8 @@
   .entry {
     display: flex;
     /* flex-direction: row; */
+  }
+  .checked {
+    background-color: greenyellow;
   }
 </style>
