@@ -7,6 +7,9 @@
   let displayedList = [];
 
   const TASKLIST = "tasklist";
+  let testResponse = {
+    tasklist: []
+  };
 
   let textInput = '';
 
@@ -36,24 +39,35 @@
 
   async function createListWithAddedEntry(newEntry: Entry) {
     try {
+      // /* Test values here!! */
+      // let response = testResponse;
+
+
       let response = await chrome.storage.local.get(TASKLIST);
-      return TASKLIST in response ? [...response.tasklist, newEntry] : [newEntry];
+      return TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? [...response.tasklist, newEntry] : [newEntry];
+
     } catch (error) {
       console.log("Error updating list in createListWithAddedEntry", error);
     }
   }
 
   async function setEntry() {
-    console.log("displayedList in setEntry before doing anything: ", displayedList);
     let newEntry = await createNewEntry();
+    console.log("displayedList in setEntry before doing anything: ", displayedList);
     console.log("createNewEntry called in setEntry: ", newEntry);
+
     if(newEntry === undefined || (Object.entries(newEntry).length === 0)) {
       console.log("displayedList in setEntry when newEntry is undefined: ", displayedList);
       return;
     }
+
     let updatedList = await createListWithAddedEntry(newEntry);
 
     try {
+      // /* Test values here!! */
+      // testResponse = {tasklist: updatedList};
+
+
       await chrome.storage.local.set({"tasklist": updatedList});
       displayedList = displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
       console.log("displayedList after set in storage: ", displayedList);
@@ -65,8 +79,12 @@
 
   async function removeEntry(index: number) {
     try {
+      // /* Test values here!! */
+      // let response = testResponse;
+
+
       let response = await chrome.storage.local.get(TASKLIST);
-      if(TASKLIST in response === false || !Array.isArray(response.tasklist)) {
+      if(TASKLIST in response === false || !Array.isArray(response.tasklist) || response.tasklist.length === 0) {
         console.log("response.tasklist does not exist or is not an array");
         return;
       }
@@ -74,39 +92,45 @@
       let updatedList = [...response.tasklist];
       updatedList.splice(index, 1);
 
+
+
+      // /* Test values here!! */
+      // testResponse = {tasklist: updatedList};
+
+
       await chrome.storage.local.set({"tasklist": updatedList});
       displayedList = [...updatedList];
-      console.log("updated tasklist once entry is removed: ", displayedList);
+      console.log("updated displayedList once removeEntry is called: ", displayedList);
     } catch (error) {
       console.log("Error removing entry in removeEntry", error);
     }
   }
 
-  let returnValueFromSet = {
-    tasklist: [
-      {
-        id: "pewofke",
-        userInput: textInput,
-        dateCreated: new Date()
-      },
-      {
-        id: "khjl3t4w",
-        userInput: textInput,
-        dateCreated: new Date()
-      },
-    ]
-  };
-
   async function clearStorage() {
+    // /* Test values here!! */
+    // testResponse = {tasklist: []};
+
+
+
     await chrome.storage.local.clear();
     displayedList = [];
+    console.log("updated displayedList once clearStorage is called: ", displayedList);
   }
 
   async function displayStoredEntries() {
+    // /* Test values here!! */
+    // let response = testResponse;
+
+
     let response = await chrome.storage.local.get("tasklist");
-    displayedList = TASKLIST in response ? response.tasklist : displayedList;
+    displayedList = TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? response.tasklist : displayedList;
     console.log("displayedList in displayStoredEntries", displayedList);
   }
+
+  onMount(async () => {
+    await displayStoredEntries();
+    console.log("onMount calling displayStoredEntries");
+	});
 
   async function organizeHistoryPromise(): Promise<{}> {
     const historyItems = await chrome.history.search({text: "", startTime: startOfToday});
@@ -129,11 +153,6 @@
     "youtube": ["youtube.com"],
   };
 
-  onMount(async () => {
-		const response = await chrome.storage.local.get("tasklist");
-		displayedList = TASKLIST in response ? response.tasklist : displayedList;
-	});
-
 </script>
 
 <div>
@@ -141,30 +160,30 @@
     Start of Today: <span>{new Date(startOfToday)}</span>
   </p> -->
 
-<form on:submit|preventDefault={setEntry}>
-  <input bind:value={textInput}>
-  <button type="submit">Add</button>
-</form>
+  <form on:submit|preventDefault={setEntry}>
+    <input bind:value={textInput}>
+    <button type="submit">Add</button>
+  </form>
 
-<button on:click={clearStorage}>Clear All</button>
+  <button on:click={clearStorage}>Clear All</button>
 
-{#if displayedList.length > 0}
-<div id="checklist">
-  {#await displayEntries}
-  <p>Add a task</p>
-  {:then}
-    {#each displayedList as entry, index (entry.id)}
-      <div class="entry">
-        <label>
-          <input type=checkbox name="selectedTasks" value={entry.userInput}>
-          {entry.userInput}
-        </label>
-        <span on:click={() => removeEntry(index)}>❌</span>
-      </div>
-    {/each}
-  {/await}
-</div>
-{/if}
+  {#if displayedList.length > 0}
+  <div id="checklist">
+    {#await displayEntries}
+    <p>Add a task</p>
+    {:then}
+      {#each displayedList as entry, index (entry.id)}
+        <div class="entry">
+          <label>
+            <input type=checkbox name="selectedTasks" value={entry.userInput}>
+            {entry.userInput}
+          </label>
+          <span on:click={() => removeEntry(index)}>❌</span>
+        </div>
+      {/each}
+    {/await}
+  </div>
+  {/if}
 
   {#await historyResults}
     <p>...waiting</p>
@@ -187,6 +206,7 @@
     {:catch error}
       <p style="color: red">{error.message}</p>
   {/await}
+
 </div>
 
 <style scoped>
