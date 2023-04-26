@@ -6,6 +6,24 @@
   let startOfToday = new Date().setHours(0,0,0,0);
   let displayedList = [];
 
+  let testValues = [
+    {
+      id: (+new Date * Math.random()).toString(36).substring(0,6),
+      userInput: "first",
+      dateCreated: new Date()
+    },
+    {
+      id: (+new Date * Math.random()).toString(36).substring(0,6),
+      userInput: "second",
+      dateCreated: new Date()
+    },
+    {
+      id: (+new Date * Math.random()).toString(36).substring(0,6),
+      userInput: "third",
+      dateCreated: new Date()
+    },
+  ];
+
   const TASKLIST = "tasklist";
 
   let textInput = '';
@@ -141,30 +159,30 @@
     Start of Today: <span>{new Date(startOfToday)}</span>
   </p> -->
 
-<form on:submit|preventDefault={setEntry}>
-  <input bind:value={textInput}>
-  <button type="submit">Add</button>
-</form>
+  <form on:submit|preventDefault={setEntry}>
+    <input bind:value={textInput}>
+    <button type="submit">Add</button>
+  </form>
 
-<button on:click={clearStorage}>Clear All</button>
+  <button on:click={clearStorage}>Clear All</button>
 
-{#if displayedList.length > 0}
-<div id="checklist">
-  {#await displayEntries}
-  <p>Add a task</p>
-  {:then}
-    {#each displayedList as entry, index (entry.id)}
-      <div class="entry">
-        <label>
-          <input type=checkbox name="selectedTasks" value={entry.userInput}>
-          {entry.userInput}
-        </label>
-        <span on:click={() => removeEntry(index)}>❌</span>
-      </div>
-    {/each}
-  {/await}
-</div>
-{/if}
+  {#if displayedList.length > 0}
+  <div id="checklist">
+    {#await displayEntries}
+    <p>Add a task</p>
+    {:then}
+      {#each displayedList as entry, index (entry.id)}
+        <div class="entry">
+          <label>
+            <input type=checkbox name="selectedTasks" value={entry.userInput}>
+            {entry.userInput}
+          </label>
+          <span on:click={() => removeEntry(index)}>❌</span>
+        </div>
+      {/each}
+    {/await}
+  </div>
+  {/if}
 
   {#await historyResults}
     <p>...waiting</p>
@@ -187,6 +205,7 @@
     {:catch error}
       <p style="color: red">{error.message}</p>
   {/await}
+
 </div>
 
 <style scoped>
