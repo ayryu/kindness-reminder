@@ -141,8 +141,11 @@
     Start of Today: <span>{new Date(startOfToday)}</span>
   </p> -->
 
-<input bind:value={textInput}>
-<button on:click={setEntry}>Add</button>
+<form on:submit|preventDefault={setEntry}>
+  <input bind:value={textInput}>
+  <button type="submit">Add</button>
+</form>
+
 <button on:click={clearStorage}>Clear All</button>
 
 {#if displayedList.length > 0}
