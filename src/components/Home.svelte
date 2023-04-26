@@ -99,6 +99,7 @@
 
   async function clearStorage() {
     await chrome.storage.local.clear();
+    displayedList = [];
   }
 
   async function displayStoredEntries() {
