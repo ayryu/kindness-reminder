@@ -6,11 +6,10 @@
   let startOfToday = new Date().setHours(0,0,0,0);
   let displayedList = [];
 
+  const TASKLIST = "tasklist";
   let testResponse = {
     tasklist: []
   };
-
-  const TASKLIST = "tasklist";
 
   let textInput = '';
 
@@ -108,12 +107,14 @@
   }
 
   async function clearStorage() {
+    // /* Test values here!! */
+    // testResponse = {tasklist: []};
+
+
+
     await chrome.storage.local.clear();
     displayedList = [];
     console.log("updated displayedList once clearStorage is called: ", displayedList);
-
-    // /* Test values here!! */
-    // testResponse = {tasklist: []};
   }
 
   async function displayStoredEntries() {
