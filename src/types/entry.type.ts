@@ -1,5 +1,6 @@
 export type Entry = {
     id: string
     userInput: string
-    dateCreated: Date
+    dateCreated: Date,
+    checked: boolean;
   }

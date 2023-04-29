@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Accordion, AccordionItem } from "carbon-components-svelte";
   import type { Entry } from "src/types/entry.type";
-  import { onMount } from 'svelte';
+  // import { Entry } from "src/classes/Entry";
 
   let startOfToday = new Date().setHours(0,0,0,0);
   let displayedList = [];
@@ -10,14 +10,6 @@
   let testResponse = {
     tasklist: []
   };
-
-  $ : {
-    let old = {
-      tasklist: []
-    };
-
-    old.tasklist.splice(index, 1, newValue);
-  }
 
   let textInput = '';
 
@@ -51,9 +43,8 @@
       // /* Test values here!! */
       // let response = testResponse;
 
-
-      let response = await chrome.storage.local.get(TASKLIST);
-      return TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? [...response.tasklist, newEntry] : [newEntry];
+      /* displayedList state is up-to-date, local storage state is not */
+      return displayedList.length !== 0 ? [displayedList, newEntry] : [newEntry];
 
     } catch (error) {
       console.log("Error updating list in createListWithAddedEntry", error);
@@ -84,6 +75,17 @@
     } catch (error) {
       console.log("Error setting new entry in setEntry", error);
     }
+  }
+
+    async function updateEntry(entryToUpdate: Entry, index: number) {
+    console.log("index", index);
+    console.log("updated Entry", entryToUpdate);
+    const testUpdatingList = [...displayedList];
+    testUpdatingList.splice(index, 1, entryToUpdate);
+    console.log("new updated list", testUpdatingList);
+
+    displayedList = testUpdatingList;
+    await chrome.storage.local.set({"tasklist": displayedList});
   }
 
   async function removeEntry(index: number) {
@@ -136,11 +138,6 @@
     console.log("displayedList in displayStoredEntries", displayedList);
   }
 
-  onMount(async () => {
-    await displayStoredEntries();
-    console.log("onMount calling displayStoredEntries");
-	});
-
   async function organizeHistoryPromise(): Promise<{}> {
     const historyItems = await chrome.history.search({text: "", startTime: startOfToday});
     
@@ -184,7 +181,7 @@
       {#each displayedList as entry, index (entry.id)}
         <div class="entry">
           <label>
-            <input bind:checked={entry.checked} type=checkbox name="selectedTasks" value={entry.userInput}>
+            <input bind:checked={entry.checked} on:change={() => updateEntry(entry, index)} type=checkbox name="selectedTasks" value={entry.userInput}>
             <span class:checked={entry.checked}>{entry.userInput}</span>
           </label>
           <span on:click={() => removeEntry(index)}>❌</span>
@@ -228,6 +225,6 @@
     /* flex-direction: row; */
   }
   .checked {
-    background-color: greenyellow;
+    text-decoration: line-through;
   }
 </style>
