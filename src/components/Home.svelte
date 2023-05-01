@@ -11,6 +11,64 @@
     tasklist: []
   };
 
+  let categories = [
+    {
+        name: "categoryA",
+        id: "f32432",
+        order: 0,
+        items: [
+          {
+            id: "34tho3i4th",
+            userInput: "input",
+            dateCreated: new Date(),
+            checked: false,
+          },
+          {
+            id: "w34oigh4",
+            userInput: "input",
+            dateCreated: new Date(),
+            checked: false,
+          }
+        ]
+      },
+      {
+        name: "categoryB",
+        id: "l34jthk",
+        order: 1,
+        items: [
+          {
+            id: "o32ifjh",
+            userInput: "input",
+            dateCreated: new Date(),
+            checked: false,
+          },
+          {
+            id: "4otihw43",
+            userInput: "input",
+            dateCreated: new Date(),
+            checked: false,
+          }
+        ]
+      }
+  ];
+
+  let currentStructure = {
+    tasklist: [
+      {
+        id: "o32ifjh",
+        userInput: "input",
+        dateCreated: new Date(),
+        checked: false,
+      },
+      {
+        id: "w34oigh4",
+        userInput: "input",
+        dateCreated: new Date(),
+        checked: false,
+      }
+    ]
+  };
+
   let textInput = '';
 
   let displayEntries = displayStoredEntries();
@@ -21,6 +79,10 @@
   // pull existing list from storage
   // create new array with existing list and add new Entry object
   // set updated array to storage
+
+  async function getCategory() {
+    
+  }
 
   async function createNewEntry() {
     if(textInput.trim().length === 0) {
@@ -44,7 +106,8 @@
       // let response = testResponse;
 
       /* displayedList state is up-to-date, local storage state is not */
-      return displayedList.length !== 0 ? [displayedList, newEntry] : [newEntry];
+      console.log("displayedList in createListWithAddedEntry before doing anything: ", displayedList);
+      return displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
 
     } catch (error) {
       console.log("Error updating list in createListWithAddedEntry", error);
@@ -62,6 +125,7 @@
     }
 
     let updatedList = await createListWithAddedEntry(newEntry);
+    console.log("updatedList in setEntry", updatedList);
 
     try {
       // /* Test values here!! */
@@ -69,7 +133,8 @@
 
 
       await chrome.storage.local.set({"tasklist": updatedList});
-      displayedList = displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
+      // displayedList = displayedList.length !== 0 ? [...updatedList] : [newEntry];
+      displayedList = [...updatedList];
       console.log("displayedList after set in storage: ", displayedList);
       textInput = '';
     } catch (error) {
@@ -77,7 +142,7 @@
     }
   }
 
-    async function updateEntry(entryToUpdate: Entry, index: number) {
+  async function updateEntry(entryToUpdate: Entry, index: number) {
     console.log("index", index);
     console.log("updated Entry", entryToUpdate);
     const testUpdatingList = [...displayedList];
@@ -122,8 +187,8 @@
     // testResponse = {tasklist: []};
 
 
-
     await chrome.storage.local.clear();
+    // displayedList should be cleared after local storage
     displayedList = [];
     console.log("updated displayedList once clearStorage is called: ", displayedList);
   }
@@ -172,6 +237,11 @@
   </form>
 
   <button on:click={clearStorage}>Clear All</button>
+
+  <div id="categories">
+    {#each categories as category, index (category.id)}
+    {/each}
+  </div>
 
   {#if displayedList.length > 0}
   <div id="checklist">
