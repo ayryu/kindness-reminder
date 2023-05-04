@@ -132,7 +132,6 @@
 
 
       await chrome.storage.local.set({"tasklist": updatedList});
-      // displayedList = displayedList.length !== 0 ? [...updatedList] : [newEntry];
       displayedList = [...updatedList];
       console.log("displayedList after set in storage: ", displayedList);
       textInput = '';
@@ -243,7 +242,8 @@
 
   <div id="categories">
     {#each categories as category, categoryIndex (category.id)}
-      <h2 class="category">{category.name}</h2>
+      <!-- <h2 class="category">{category.name}</h2> -->
+      <input class="category" type="text" bind:value={category.name} />
         <ul>
           {#each category.items as item, itemIndex (item.id)}
             <li>
@@ -317,5 +317,9 @@
   }
   .checked {
     text-decoration: line-through;
+  }
+  .category {
+    /* padding: 20px 10px;  */
+    line-height: 25px;
   }
 </style>
