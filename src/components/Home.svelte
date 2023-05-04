@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Accordion, AccordionItem } from "carbon-components-svelte";
   import type { Entry } from "src/types/entry.type";
-  // import { Entry } from "src/classes/Entry";
 
   let startOfToday = new Date().setHours(0,0,0,0);
   let displayedList = [];
@@ -10,6 +9,49 @@
   let testResponse = {
     tasklist: []
   };
+
+  let rawResponse = {
+    tasklist: [
+      {
+        id: "o32ifjh",
+        name: "Category 1",
+        items: [
+          {
+            id: "abcd1234",
+            input: "Item 1",
+            checked: false,
+            dateCreated: new Date(),
+          },
+          {
+            id: "efgh5678",
+            input: "Item 2",
+            checked: false,
+            dateCreated: new Date(),
+          },
+        ],
+      },
+      {
+        id: "w34oigh4",
+        name: "Category 2",
+        items: [
+          {
+            id: "ijkl9012",
+            input: "Item 3",
+            checked: false,
+            dateCreated: new Date(),
+          },
+          {
+            id: "mnop3456",
+            input: "Item 4",
+            checked: false,
+            dateCreated: new Date(),
+          },
+        ],
+      },
+    ],
+  };
+
+  let categories = rawResponse.tasklist;
 
   let textInput = '';
 
@@ -21,6 +63,25 @@
   // pull existing list from storage
   // create new array with existing list and add new Entry object
   // set updated array to storage
+
+  function changeInput(categoryIndex: number, itemIndex: number, entry) {
+    console.log("categories after running changeInput", categories);
+
+    // const updatedList = [...categories];
+    // console.log("updatedList in changeInput", updatedList);
+
+    // const items = updatedList[categoryIndex].items;
+    // console.log("items in changeInput", items);
+
+    // const updatedItem = { ...items[itemIndex], input: entry.input };
+    // console.log("updatedItem in changeInput", updatedItem);
+
+    // items.splice(itemIndex, 1, updatedItem);
+    // console.log("items in changeInput", items);
+
+    // categories = updatedList;
+    // console.log("categories after running changeInput", categories);
+  }
 
   async function createNewEntry() {
     if(textInput.trim().length === 0) {
@@ -44,7 +105,8 @@
       // let response = testResponse;
 
       /* displayedList state is up-to-date, local storage state is not */
-      return displayedList.length !== 0 ? [displayedList, newEntry] : [newEntry];
+      console.log("displayedList in createListWithAddedEntry before doing anything: ", displayedList);
+      return displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
 
     } catch (error) {
       console.log("Error updating list in createListWithAddedEntry", error);
@@ -62,6 +124,7 @@
     }
 
     let updatedList = await createListWithAddedEntry(newEntry);
+    console.log("updatedList in setEntry", updatedList);
 
     try {
       // /* Test values here!! */
@@ -69,7 +132,7 @@
 
 
       await chrome.storage.local.set({"tasklist": updatedList});
-      displayedList = displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
+      displayedList = [...updatedList];
       console.log("displayedList after set in storage: ", displayedList);
       textInput = '';
     } catch (error) {
@@ -77,14 +140,18 @@
     }
   }
 
-    async function updateEntry(entryToUpdate: Entry, index: number) {
-    console.log("index", index);
-    console.log("updated Entry", entryToUpdate);
-    const testUpdatingList = [...displayedList];
-    testUpdatingList.splice(index, 1, entryToUpdate);
-    console.log("new updated list", testUpdatingList);
+  // async function updateEntry(entryToUpdate: Entry, index: number) {
+  async function updateEntry() {
+    // console.log("index", index);
+    // console.log("updated Entry", entryToUpdate);
+    // console.log("displayedList in updateEntry", displayedList);
+    // const testUpdatingList = [...displayedList];
+    // testUpdatingList.splice(index, 1, entryToUpdate);
+    // console.log("new updated list", testUpdatingList);
 
-    displayedList = testUpdatingList;
+    // displayedList = testUpdatingList;
+
+    console.log("displayedList in updateEntry before setting to local storage", displayedList);
     await chrome.storage.local.set({"tasklist": displayedList});
   }
 
@@ -122,8 +189,8 @@
     // testResponse = {tasklist: []};
 
 
-
     await chrome.storage.local.clear();
+    // displayedList should be cleared after local storage
     displayedList = [];
     console.log("updated displayedList once clearStorage is called: ", displayedList);
   }
@@ -173,20 +240,44 @@
 
   <button on:click={clearStorage}>Clear All</button>
 
+  <div id="categories">
+    {#each categories as category, categoryIndex (category.id)}
+      <!-- <h2 class="category">{category.name}</h2> -->
+      <input class="category" type="text" bind:value={category.name} />
+        <ul>
+          {#each category.items as item, itemIndex (item.id)}
+            <li>
+              <label class="entry">
+                <input type="checkbox" bind:checked={item.checked} />
+                <input type="text" bind:value={item.input} />
+                <!-- <input type="text" bind:value={item.input} on:change={() => changeInput(categoryIndex, itemIndex, item)} /> -->
+                <!-- {item.input} -->
+              </label>
+            </li>
+          {/each}
+      </ul>
+    {/each}
+  </div>
+
   {#if displayedList.length > 0}
   <div id="checklist">
     {#await displayEntries}
     <p>Add a task</p>
     {:then}
+      <ul>
       {#each displayedList as entry, index (entry.id)}
-        <div class="entry">
+        <!-- <div class="entry"> -->
+        <li class="item">
           <label>
-            <input bind:checked={entry.checked} on:change={() => updateEntry(entry, index)} type=checkbox name="selectedTasks" value={entry.userInput}>
+            <!-- <input bind:checked={entry.checked} on:change={() => updateEntry(entry, index)} type=checkbox name="selectedTasks" value={entry.userInput}> -->
+            <input bind:checked={entry.checked} on:change={() => updateEntry()} type=checkbox name="selectedTasks" value={entry.userInput}>
             <span class:checked={entry.checked}>{entry.userInput}</span>
           </label>
           <span on:click={() => removeEntry(index)}>❌</span>
-        </div>
+        </li>
+      <!-- </div> -->
       {/each}
+      </ul>
     {/await}
   </div>
   {/if}
@@ -226,5 +317,9 @@
   }
   .checked {
     text-decoration: line-through;
+  }
+  .category {
+    /* padding: 20px 10px;  */
+    line-height: 25px;
   }
 </style>
