@@ -52,8 +52,10 @@
   };
 
   let categories = rawResponse.tasklist;
+  let categoryList = [];
 
   let textInput = '';
+  let categoryInput = '';
 
   let displayEntries = displayStoredEntries();
   let historyResults = organizeHistoryPromise();
@@ -81,6 +83,64 @@
 
     // categories = updatedList;
     // console.log("categories after running changeInput", categories);
+  }
+
+  async function createNewCategory() {
+    if(categoryInput.trim().length === 0) {
+      console.log("categoryInput from createNewCategory", categoryInput);
+      console.log("current categoryList: ", categoryList);
+      categoryInput = '';
+      return;
+    }
+    let objectId = (+new Date * Math.random()).toString(36).substring(0,6);
+    return {
+      id: objectId,
+      name: categoryInput,
+      dateCreated: new Date(),
+      checked: false,
+      items: [],
+    };
+  }
+
+  async function createListWithAddedCategory(category) {
+    try {
+      // /* Test values here!! */
+      // let response = testResponse;
+
+      /* categoryList state is up-to-date, local storage state is not */
+      console.log("categoryList in createListWithAddedCategory before doing anything: ", categoryList);
+      return categoryList.length !== 0 ? [...categoryList, category] : [category];
+
+    } catch (error) {
+      console.log("Error updating list in createListWithAddedCategory", error);
+    }
+  }
+
+  async function setCategory() {
+    let newCategory = await createNewCategory();
+    console.log("categoryList in setCategory before doing anything: ", categoryList);
+    console.log("newCategory created in setCategory: ", newCategory);
+
+    if(newCategory === undefined || (Object.entries(newCategory).length === 0)) {
+      console.log("categoryList in setCategory when newCategory is undefined: ", categoryList);
+      return;
+    }
+
+    let updatedCategoryList = await createListWithAddedCategory(newCategory);
+    console.log("updatedCategoryList in setCategory", updatedCategoryList);
+
+    try {
+      // /* Test values here!! */
+      // testResponse = {tasklist: updatedList};
+
+
+      await chrome.storage.local.set({"tasklist": updatedCategoryList});
+      categoryList = [...updatedCategoryList];
+      console.log("categoryList after set in storage: ", categoryList);
+      categoryInput = '';
+    } catch (error) {
+      console.log("Error setting new category in setCategory", error);
+    }
   }
 
   async function createNewEntry() {
@@ -191,8 +251,11 @@
 
     await chrome.storage.local.clear();
     // displayedList should be cleared after local storage
-    displayedList = [];
-    console.log("updated displayedList once clearStorage is called: ", displayedList);
+    // displayedList = [];
+    // console.log("updated displayedList once clearStorage is called: ", displayedList);
+
+    categoryList = [];
+    console.log("updated categoryList once clearStorage is called: ", categoryList);
   }
 
   async function displayStoredEntries() {
@@ -201,8 +264,10 @@
 
 
     let response = await chrome.storage.local.get("tasklist");
-    displayedList = TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? response.tasklist : displayedList;
-    console.log("displayedList in displayStoredEntries", displayedList);
+    // displayedList = TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? response.tasklist : displayedList;
+    // console.log("displayedList in displayStoredEntries", displayedList);
+    categoryList = TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? response.tasklist : categoryList;
+    console.log("categoryList in displayStoredEntries", categoryList);
   }
 
   async function organizeHistoryPromise(): Promise<{}> {
@@ -233,18 +298,53 @@
     Start of Today: <span>{new Date(startOfToday)}</span>
   </p> -->
 
-  <form on:submit|preventDefault={setEntry}>
+  <!-- <form on:submit|preventDefault={setEntry}>
     <input bind:value={textInput}>
     <button type="submit">Add</button>
+    <button on:click={clearStorage}>Clear All</button>
   </form>
 
-  <button on:click={clearStorage}>Clear All</button>
+  {#if displayedList.length > 0}
+  <div id="checklist">
+    {#await displayEntries}
+    <p>Add a task</p>
+    {:then}
+      <ul>
+      {#each displayedList as entry, index (entry.id)}
+        <li class="item">
+          <label>
+            <input bind:checked={entry.checked} on:change={() => updateEntry()} type=checkbox name="selectedTasks" value={entry.userInput}>
+            <span class:checked={entry.checked}>{entry.userInput}</span>
+          </label>
+          <span on:click={() => removeEntry(index)}>❌</span>
+        </li>
+      {/each}
+      </ul>
+    {/await}
+  </div>
+  {/if} -->
 
+  <!-- <form>
+    <input>
+    <button>Create Category</button>
+  </form> -->
+
+  <form on:submit|preventDefault={setCategory}>
+    <input bind:value={categoryInput}>
+    <button type="submit">Create Category</button>
+    <button on:click={clearStorage}>Clear All</button>
+  </form>
+
+  {#if categoryList.length > 0}
   <div id="categories">
-    {#each categories as category, categoryIndex (category.id)}
+    {#await displayEntries}
+    <p>Add a category</p>
+    {:then}
+    {#each categoryList as category, categoryIndex (category.id)}
       <!-- <h2 class="category">{category.name}</h2> -->
       <input class="category" type="text" bind:value={category.name} />
         <ul>
+          {#if category.items !== undefined && category.items.length > 0}
           {#each category.items as item, itemIndex (item.id)}
             <li>
               <label class="entry">
@@ -255,29 +355,9 @@
               </label>
             </li>
           {/each}
+          {/if}
       </ul>
     {/each}
-  </div>
-
-  {#if displayedList.length > 0}
-  <div id="checklist">
-    {#await displayEntries}
-    <p>Add a task</p>
-    {:then}
-      <ul>
-      {#each displayedList as entry, index (entry.id)}
-        <!-- <div class="entry"> -->
-        <li class="item">
-          <label>
-            <!-- <input bind:checked={entry.checked} on:change={() => updateEntry(entry, index)} type=checkbox name="selectedTasks" value={entry.userInput}> -->
-            <input bind:checked={entry.checked} on:change={() => updateEntry()} type=checkbox name="selectedTasks" value={entry.userInput}>
-            <span class:checked={entry.checked}>{entry.userInput}</span>
-          </label>
-          <span on:click={() => removeEntry(index)}>❌</span>
-        </li>
-      <!-- </div> -->
-      {/each}
-      </ul>
     {/await}
   </div>
   {/if}
