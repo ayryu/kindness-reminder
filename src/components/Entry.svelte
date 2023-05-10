@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
     import { Entry } from "src/classes/Entry";
     let textInput = '';
 
@@ -16,12 +16,9 @@
 
 <div class="entry">
     <label>
-        <input bind:checked={checkedValue} type=checkbox name="selectedTasks" value={entry.userInput}>
-        <span class:checked={entry.checked}>{entry.userInput}</span>
-        <!-- <input bind:checked={entry.checked} type=checkbox name="selectedTasks" value={entry.userInput}>
-        <span class:checked={entry.checked}>{entry.userInput}</span> -->
+        <input bind:checked={checkedValue} type=checkbox name="selectedTasks" value={entry.input}>
+        <span class:checked={entry.checked}>{entry.input}</span>
     </label>
-    <!-- <span on:click={() => removeEntry(index)}>❌</span> -->
 </div>
 
 <style scoped>
@@ -36,4 +33,4 @@
     .checked {
       background-color: greenyellow;
     }
-  </style>
+  </style> -->
