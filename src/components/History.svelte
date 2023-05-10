@@ -5,19 +5,25 @@
     let historyResults = organizeHistoryPromise();
 
     async function organizeHistoryPromise(): Promise<{}> {
-    const historyItems = await chrome.history.search({text: "", startTime: startOfToday});
-    
-    let organizedHistory = {};
-    for (let item of historyItems) {
-      let hostname = new URL(item.url).hostname;
-        Array.isArray(organizedHistory[hostname]) ?
-          organizedHistory[hostname].push(item) :  
-          organizedHistory[hostname] = [item];
+        const historyItems = await chrome.history.search({text: "", startTime: startOfToday});
+        
+        let organizedHistory = {};
+        for (let item of historyItems) {
+        let hostname = new URL(item.url).hostname;
+            Array.isArray(organizedHistory[hostname]) ?
+            organizedHistory[hostname].push(item) :  
+            organizedHistory[hostname] = [item];
+        }
+
+        // console.log("Organized History", organizedHistory);
+        return organizedHistory;
     }
 
-    // console.log("Organized History", organizedHistory);
-    return organizedHistory;
-  }
+    let obj = 
+    {
+        "google":  ["google.com", "google.com/1"],
+        "youtube": ["youtube.com"],
+    };
 </script>
 
 <!-- <p>
