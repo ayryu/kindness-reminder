@@ -173,6 +173,38 @@
     }
   }
 
+
+  async function addEntryToCategory(categoryIndex: number) {
+    let newEntry = await createNewEntry();
+    console.log("categoryList in addEntryToCategory before doing anything: ", categoryList);
+    console.log("newEntry created in addEntryToCategory: ", newEntry);
+
+    if(newEntry === undefined || (Object.entries(newEntry).length === 0)) {
+      console.log("categoryList in addEntryToCategory when newEntry is undefined: ", categoryList);
+      return;
+    }
+
+    // let updatedListOfEntriesInCategory = await createListWithAddedEntry(newEntry);
+    // console.log("updatedCategoryList in addEntryToCategory", updatedListOfEntriesInCategory);
+
+    categoryList[categoryIndex].items = [...categoryList[categoryIndex].items, newEntry];
+    console.log("category with new entry in addEntryToCategory", categoryList[categoryIndex]);
+    console.log("full categoryList with new entry in addEntryToCategory", categoryList);
+
+    try {
+      // /* Test values here!! */
+      // testResponse = {tasklist: updatedList};
+
+
+      await chrome.storage.local.set({"tasklist": categoryList});
+      categoryList = [...categoryList];
+      console.log("categoryList after set in storage in addEntryToCategory: ", categoryList);
+      textInput = '';
+    } catch (error) {
+      console.log("Error setting new category in addEntryToCategory", error);
+    }
+  }
+
   async function setEntry() {
     let newEntry = await createNewEntry();
     console.log("displayedList in setEntry before doing anything: ", displayedList);
@@ -344,18 +376,24 @@
       <!-- <h2 class="category">{category.name}</h2> -->
       <input class="category" type="text" bind:value={category.name} />
         <ul>
+          <!-- <input type="text" />
+          <button on:submit={() => addEntryToCategory(categoryIndex)}>Create Entry</button> -->
           {#if category.items !== undefined && category.items.length > 0}
           {#each category.items as item, itemIndex (item.id)}
             <li>
               <label class="entry">
                 <input type="checkbox" bind:checked={item.checked} />
-                <input type="text" bind:value={item.input} />
+                <input type="text" bind:value={item.userInput} />
                 <!-- <input type="text" bind:value={item.input} on:change={() => changeInput(categoryIndex, itemIndex, item)} /> -->
                 <!-- {item.input} -->
               </label>
             </li>
           {/each}
           {/if}
+          <form on:submit|preventDefault={() => addEntryToCategory(categoryIndex)}>
+            <input bind:value={textInput}>
+            <button type="submit">Create Entry</button>
+          </form>
       </ul>
     {/each}
     {/await}
