@@ -191,30 +191,28 @@
     await chrome.storage.local.set({"tasklist": categoryList});
   }
 
-  async function removeEntry(index: number) {
+  async function removeEntry(categoryIndex: number, entryIndex: number) {
     try {
       // /* Test values here!! */
       // let response = testResponse;
 
+      console.log("categoryList in removeEntry", categoryList);
+      console.log("entry to remove in removeEntry", categoryList[categoryIndex].items[entryIndex]);
 
-      let response = await chrome.storage.local.get(TASKLIST);
-      if(TASKLIST in response === false || !Array.isArray(response.tasklist) || response.tasklist.length === 0) {
-        console.log("response.tasklist does not exist or is not an array");
-        return;
-      }
-      console.log("unupdated tasklist from removeEntry: ", response.tasklist);
-      let updatedList = [...response.tasklist];
-      updatedList.splice(index, 1);
+      let updatedCategoryList = structuredClone(categoryList);
+      console.log("updatedEntryListInCategory in removeEntry", updatedCategoryList);
+      updatedCategoryList[categoryIndex].items.splice(entryIndex, 1);
 
+      console.log("updatedEntryListInCategory after removing entry in removeEntry", updatedCategoryList);
+      console.log("categoryList after removing entry in removeEntry", categoryList);
 
+      await chrome.storage.local.set({"tasklist": updatedCategoryList});
+      categoryList = updatedCategoryList;
 
-      // /* Test values here!! */
-      // testResponse = {tasklist: updatedList};
+      console.log("latest categoryList after removing entry in removeEntry", categoryList);
 
-
-      await chrome.storage.local.set({"tasklist": updatedList});
-      displayedList = [...updatedList];
-      console.log("updated displayedList once removeEntry is called: ", displayedList);
+      // // /* Test values here!! */
+      // // testResponse = {tasklist: updatedList};
     } catch (error) {
       console.log("Error removing entry in removeEntry", error);
     }
@@ -287,20 +285,16 @@
     <p>Add a category</p>
     {:then}
     {#each categoryList as category, categoryIndex (category.id)}
-      <!-- <h2 class="category">{category.name}</h2> -->
       <input class="category" type="text" bind:value={category.name} />
         <ul>
-          <!-- <input type="text" />
-          <button on:submit={() => addEntryToCategory(categoryIndex)}>Create Entry</button> -->
           {#if category.items !== undefined && category.items.length > 0}
           {#each category.items as item, itemIndex (item.id)}
             <li>
               <label class="entry">
                 <input type="checkbox" bind:checked={item.checked} />
                 <input type="text" bind:value={item.userInput} />
-                <!-- <input type="text" bind:value={item.input} on:change={() => changeInput(categoryIndex, itemIndex, item)} /> -->
-                <!-- {item.input} -->
               </label>
+              <span on:click={() => removeEntry(categoryIndex, itemIndex)}>❌</span>
             </li>
           {/each}
           {/if}
