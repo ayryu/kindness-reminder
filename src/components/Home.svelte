@@ -2,289 +2,181 @@
   import type { Entry } from "src/types/entry.type";
   import History from "./History.svelte";
 
-  let displayedList = [];
-
   const TASKLIST = "tasklist";
 
-  let categoryList = [];
+  let input_list = [];
 
-  let textInput = '';
-  let categoryInput = '';
+  let new_entry_per_category = [];
+  let category_input = '';
 
-  let newEntryPerCategory = [];
+  let display_entries = display_stored_entries();
 
-  let displayEntries = displayStoredEntries();
-
-  async function createNewCategory() {
-    if(categoryInput.trim().length === 0) {
-      console.log("categoryInput from createNewCategory", categoryInput);
-      console.log("current categoryList: ", categoryList);
-      categoryInput = '';
+  async function create_category() {
+    if(category_input.trim().length === 0) {
+      console.log("category_input from create_category", category_input);
+      console.log("current input_list: ", input_list);
+      category_input = '';
       return;
     }
-    let objectId = (+new Date * Math.random()).toString(36).substring(0,6);
+    let object_id = (+new Date * Math.random()).toString(36).substring(0,6);
     return {
-      id: objectId,
-      name: categoryInput,
-      dateCreated: new Date(),
+      id: object_id,
+      name: category_input,
+      date_created: new Date(),
       checked: false,
       items: [],
     };
   }
 
-  async function createListWithAddedCategory(category) {
-    try {
-      // /* Test values here!! */
-      // let response = testResponse;
+  async function set_category() {
+    let new_category = await create_category();
+    console.log("input_list in set_category before doing anything: ", input_list);
+    console.log("new_category created in set_category: ", new_category);
 
-      /* categoryList state is up-to-date, local storage state is not */
-      console.log("categoryList in createListWithAddedCategory before doing anything: ", categoryList);
-      return categoryList.length !== 0 ? [...categoryList, category] : [category];
-
-    } catch (error) {
-      console.log("Error updating list in createListWithAddedCategory", error);
-    }
-  }
-
-  async function setCategory() {
-    let newCategory = await createNewCategory();
-    console.log("categoryList in setCategory before doing anything: ", categoryList);
-    console.log("newCategory created in setCategory: ", newCategory);
-
-    if(newCategory === undefined || (Object.entries(newCategory).length === 0)) {
-      console.log("categoryList in setCategory when newCategory is undefined: ", categoryList);
+    if(new_category === undefined || (Object.entries(new_category).length === 0)) {
+      console.log("input_list in set_category when new_category is undefined: ", input_list);
       return;
     }
 
-    let updatedCategoryList = await createListWithAddedCategory(newCategory);
-    console.log("updatedCategoryList in setCategory", updatedCategoryList);
+    let updated_input_list = [...input_list, new_category];
+    console.log("updated_input_list in set_category", updated_input_list);
 
-    newEntryPerCategory = newEntryPerCategory.length !== 0 ? [...newEntryPerCategory, ''] : [''];
-    console.log("newEntryPerCategory in setCategory", newEntryPerCategory);
+    new_entry_per_category = [...new_entry_per_category, ''];
+    console.log("new_entry_per_category in set_category", new_entry_per_category);
 
     try {
       // /* Test values here!! */
-      // testResponse = {tasklist: updatedList};
+      // test_response = {tasklist: input_list};
 
 
-      await chrome.storage.local.set({"tasklist": updatedCategoryList});
-      categoryList = [...updatedCategoryList];
-      console.log("categoryList after set in storage: ", categoryList);
-      categoryInput = '';
+      await chrome.storage.local.set({"tasklist": updated_input_list});
+      input_list = [...updated_input_list];
+      console.log("input_list after set in storage: ", input_list);
+      category_input = '';
     } catch (error) {
-      console.log("Error setting new category in setCategory", error);
+      console.log("Error setting new category in set_category", error);
     }
   }
 
-  async function createNewEntry() {
-    if(textInput.trim().length === 0) {
-      console.log("textInput from createNewEntry", textInput);
-      console.log("current displayedList: ", displayedList);
-      textInput = '';
+  async function create_entry_from_category_index(category_index: number) {
+    if(new_entry_per_category[category_index].trim().length === 0) {
+      console.log("input from create_entry_from_category_index", new_entry_per_category[category_index]);
+      console.log("current input_list from create_entry_from_category_index: ", input_list);
+      new_entry_per_category[category_index] = '';
       return;
     }
-    let objectId = (+new Date * Math.random()).toString(36).substring(0,6);
+
+    let object_id = (+new Date * Math.random()).toString(36).substring(0,6);
+    let saved_input = new_entry_per_category[category_index];
+
+    new_entry_per_category[category_index] = '';
+
+    console.log("current saved_input from create_entry_from_category_index: ", saved_input);
+    console.log("current new_entry_per_category[category_index] from create_entry_from_category_index: ", new_entry_per_category[category_index]);
+
     return {
-      id: objectId,
-      userInput: textInput,
-      dateCreated: new Date(),
+      id: object_id,
+      input: saved_input,
+      date_created: new Date(),
       checked: false,
     };
   }
 
-  async function createEntryFromCategoryIndex(categoryIndex: number) {
-    if(newEntryPerCategory[categoryIndex].trim().length === 0) {
-      console.log("input from createEntryFromCategoryIndex", newEntryPerCategory[categoryIndex]);
-      console.log("current categoryList from createEntryFromCategoryIndex: ", categoryList);
-      newEntryPerCategory[categoryIndex] = '';
+  async function add_entry_to_category(category_index: number) {
+    let new_entry = await create_entry_from_category_index(category_index);
+    console.log("input_list in add_entry_to_category before doing anything: ", input_list);
+    console.log("new_entry created in add_entry_to_category: ", new_entry);
+
+    if(new_entry === undefined || (Object.entries(new_entry).length === 0)) {
+      console.log("input_list in add_entry_to_category when new_entry is undefined: ", input_list);
       return;
     }
 
-    let objectId = (+new Date * Math.random()).toString(36).substring(0,6);
-    let savedInput = newEntryPerCategory[categoryIndex];
+    input_list[category_index].items = [...input_list[category_index].items, new_entry];
+    console.log("category with new entry in add_entry_to_category", input_list[category_index]);
+    console.log("full input_list with new entry in add_entry_to_category", input_list);
 
-    newEntryPerCategory[categoryIndex] = '';
-
-    console.log("current savedInput from createEntryFromCategoryIndex: ", savedInput);
-    console.log("current newEntryPerCategory[categoryIndex] from createEntryFromCategoryIndex: ", newEntryPerCategory[categoryIndex]);
-
-    return {
-      id: objectId,
-      userInput: savedInput,
-      dateCreated: new Date(),
-      checked: false,
-    };
-  }
-
-  async function createListWithAddedEntry(newEntry: Entry) {
     try {
       // /* Test values here!! */
-      // let response = testResponse;
+      // test_response = {tasklist: input_list};
 
-      /* displayedList state is up-to-date, local storage state is not */
-      console.log("displayedList in createListWithAddedEntry before doing anything: ", displayedList);
-      return displayedList.length !== 0 ? [...displayedList, newEntry] : [newEntry];
 
+      await chrome.storage.local.set({"tasklist": input_list});
+      input_list = [...input_list];
+      console.log("input_list after set in storage in add_entry_to_category: ", input_list);
+      new_entry_per_category[category_index] = '';
     } catch (error) {
-      console.log("Error updating list in createListWithAddedEntry", error);
+      console.log("Error setting new category in add_entry_to_category", error);
     }
   }
 
+  async function update_all() {
+    console.log("input_list in update_all before setting to local storage", input_list);
+    await chrome.storage.local.set({"tasklist": input_list});
+  }
 
-  async function addEntryToCategory(categoryIndex: number) {
-    let newEntry = await createEntryFromCategoryIndex(categoryIndex);
-    console.log("categoryList in addEntryToCategory before doing anything: ", categoryList);
-    console.log("newEntry created in addEntryToCategory: ", newEntry);
-
-    if(newEntry === undefined || (Object.entries(newEntry).length === 0)) {
-      console.log("categoryList in addEntryToCategory when newEntry is undefined: ", categoryList);
-      return;
-    }
-
-    categoryList[categoryIndex].items = [...categoryList[categoryIndex].items, newEntry];
-    console.log("category with new entry in addEntryToCategory", categoryList[categoryIndex]);
-    console.log("full categoryList with new entry in addEntryToCategory", categoryList);
-
+  async function remove_entry(category_index: number, entryIndex: number) {
     try {
       // /* Test values here!! */
-      // testResponse = {tasklist: updatedList};
+      // let response = test_response;
 
+      console.log("input_list in remove_entry", input_list);
+      console.log("entry to remove in remove_entry", input_list[category_index].items[entryIndex]);
 
-      await chrome.storage.local.set({"tasklist": categoryList});
-      categoryList = [...categoryList];
-      console.log("categoryList after set in storage in addEntryToCategory: ", categoryList);
-      textInput = '';
-    } catch (error) {
-      console.log("Error setting new category in addEntryToCategory", error);
-    }
-  }
+      let updated_input_list = structuredClone(input_list);
+      console.log("updatedEntryListInCategory in remove_entry", updated_input_list);
+      updated_input_list[category_index].items.splice(entryIndex, 1);
 
-  async function setEntry() {
-    let newEntry = await createNewEntry();
-    console.log("displayedList in setEntry before doing anything: ", displayedList);
-    console.log("createNewEntry called in setEntry: ", newEntry);
+      console.log("updatedEntryListInCategory after removing entry in remove_entry", updated_input_list);
+      console.log("input_list after removing entry in remove_entry", input_list);
 
-    if(newEntry === undefined || (Object.entries(newEntry).length === 0)) {
-      console.log("displayedList in setEntry when newEntry is undefined: ", displayedList);
-      return;
-    }
+      await chrome.storage.local.set({"tasklist": updated_input_list});
+      input_list = updated_input_list;
 
-    let updatedList = await createListWithAddedEntry(newEntry);
-    console.log("updatedList in setEntry", updatedList);
-
-    try {
-      // /* Test values here!! */
-      // testResponse = {tasklist: updatedList};
-
-
-      await chrome.storage.local.set({"tasklist": updatedList});
-      displayedList = [...updatedList];
-      console.log("displayedList after set in storage: ", displayedList);
-      textInput = '';
-    } catch (error) {
-      console.log("Error setting new entry in setEntry", error);
-    }
-  }
-
-  async function updateEntry() {
-    console.log("categoryList in updateEntry before setting to local storage", categoryList);
-    await chrome.storage.local.set({"tasklist": categoryList});
-  }
-
-  async function removeEntry(categoryIndex: number, entryIndex: number) {
-    try {
-      // /* Test values here!! */
-      // let response = testResponse;
-
-      console.log("categoryList in removeEntry", categoryList);
-      console.log("entry to remove in removeEntry", categoryList[categoryIndex].items[entryIndex]);
-
-      let updatedCategoryList = structuredClone(categoryList);
-      console.log("updatedEntryListInCategory in removeEntry", updatedCategoryList);
-      updatedCategoryList[categoryIndex].items.splice(entryIndex, 1);
-
-      console.log("updatedEntryListInCategory after removing entry in removeEntry", updatedCategoryList);
-      console.log("categoryList after removing entry in removeEntry", categoryList);
-
-      await chrome.storage.local.set({"tasklist": updatedCategoryList});
-      categoryList = updatedCategoryList;
-
-      console.log("latest categoryList after removing entry in removeEntry", categoryList);
+      console.log("latest input_list after removing entry in remove_entry", input_list);
 
       // // /* Test values here!! */
-      // // testResponse = {tasklist: updatedList};
+      // // test_response = {tasklist: input_list};
     } catch (error) {
-      console.log("Error removing entry in removeEntry", error);
+      console.log("Error removing entry in remove_entry", error);
     }
   }
 
-  async function clearStorage() {
+  async function clear_storage() {
     // /* Test values here!! */
-    // testResponse = {tasklist: []};
+    // test_response = {tasklist: []};
 
 
     await chrome.storage.local.clear();
-    categoryList = [];
-    console.log("updated categoryList once clearStorage is called: ", categoryList);
+    input_list = [];
+    console.log("updated input_list once clear_storage is called: ", input_list);
   }
 
-  async function displayStoredEntries() {
+  async function display_stored_entries() {
     // /* Test values here!! */
-    // let response = testResponse;
+    // let response = test_response;
 
 
     let response = await chrome.storage.local.get("tasklist");
-    categoryList = TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? response.tasklist : categoryList;
-    console.log("categoryList in displayStoredEntries", categoryList);
+    input_list = TASKLIST in response && Array.isArray(response.tasklist) && response.tasklist.length !== 0 ? response.tasklist : input_list;
+    console.log("input_list in display_stored_entries", input_list);
   }
 
 </script>
 
 <div>
-
-  <!-- <form on:submit|preventDefault={setEntry}>
-    <input bind:value={textInput}>
-    <button type="submit">Add</button>
-    <button on:click={clearStorage}>Clear All</button>
-  </form>
-
-  {#if displayedList.length > 0}
-  <div id="checklist">
-    {#await displayEntries}
-    <p>Add a task</p>
-    {:then}
-      <ul>
-      {#each displayedList as entry, index (entry.id)}
-        <li class="item">
-          <label>
-            <input bind:checked={entry.checked} on:change={() => updateEntry()} type=checkbox name="selectedTasks" value={entry.userInput}>
-            <span class:checked={entry.checked}>{entry.userInput}</span>
-          </label>
-          <span on:click={() => removeEntry(index)}>❌</span>
-        </li>
-      {/each}
-      </ul>
-    {/await}
-  </div>
-  {/if} -->
-
-  <!-- <form>
-    <input>
-    <button>Create Category</button>
-  </form> -->
-
-  <form on:submit|preventDefault={setCategory}>
-    <input bind:value={categoryInput}>
+  <form on:submit|preventDefault={set_category}>
+    <input bind:value={category_input}>
     <button type="submit">Create Category</button>
-    <button on:click={clearStorage}>Clear All</button>
+    <button on:click={clear_storage}>Clear All</button>
   </form>
 
-  {#if categoryList.length > 0}
-  <div id="categories" on:change={() => updateEntry()}>
-    {#await displayEntries}
+  {#if input_list.length > 0}
+  <div id="categories" on:change={() => update_all()}>
+    {#await display_entries}
     <p>Add a category</p>
     {:then}
-    {#each categoryList as category, categoryIndex (category.id)}
+    {#each input_list as category, category_index (category.id)}
       <input class="category" type="text" bind:value={category.name} />
         <ul>
           {#if category.items !== undefined && category.items.length > 0}
@@ -292,14 +184,14 @@
             <li>
               <label class="entry">
                 <input type="checkbox" bind:checked={item.checked} />
-                <input type="text" bind:value={item.userInput} />
+                <input type="text" bind:value={item.input} />
               </label>
-              <span on:click={() => removeEntry(categoryIndex, itemIndex)}>❌</span>
+              <span on:click={() => remove_entry(category_index, itemIndex)}>❌</span>
             </li>
           {/each}
           {/if}
-          <form class="entry" on:submit|preventDefault={() => addEntryToCategory(categoryIndex)}>
-            <input bind:value={newEntryPerCategory[categoryIndex]}>
+          <form class="entry" on:submit|preventDefault={() => add_entry_to_category(category_index)}>
+            <input bind:value={new_entry_per_category[category_index]}>
             <button type="submit">Create Entry</button>
           </form>
       </ul>
@@ -313,10 +205,6 @@
 </div>
 
 <style scoped>
-  #checklist {
-    display: flex;
-    flex-direction: column;
-  }
   .entry {
     display: flex;
     /* flex-direction: row; */
